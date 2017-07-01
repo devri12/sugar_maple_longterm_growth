@@ -1,5 +1,8 @@
 library(shiny)
 library(readr)
+library(dplyr)
+library(magrittr)
+library(ggplot2)
 
 ################## DATA IMPORT ##################
 
@@ -49,10 +52,15 @@ w6_2007veg$year <- rep(2007, nrow(w6_2007veg))
 w6_2012veg$year <- rep(2012, nrow(w6_2012veg))
 
 #combine dfs into one
-w6_veg <- rbind(w6_1965veg, w6_1977veg, w6_1982veg, w6_1987veg, w6_1992veg, w6_1997veg, w6_2002veg, w6_2007veg, w6_2012veg) #works, but needs the year to distinguish data
+w6_veg <- rbind(w6_1965veg, w6_1977veg, w6_1982veg, w6_1987veg, w6_1992veg, w6_1997veg, w6_2002veg, w6_2007veg, w6_2012veg)
 
 #filter by sugar maples
 w6_veg <- w6_veg[w6_veg$Species == "ACSA", ]
+
+#sum by year in new column.. ##WEIGHT THIS
+w6_veg_yearly_biomass <- w6_veg %>% 
+  group_by(year) %>% 
+  summarise(AbvBmss_year_sum = sum(AbvBmss))
 
 #save as RDS file
 saveRDS(w6_veg, file="w6_veg.rds")
@@ -60,7 +68,12 @@ w6_veg <- readRDS("w6_veg.rds")
 
 ################## END DATA IMPORT ##################
 
-
 shinyServer(function(input, output){
+
+  #make some type of output to show change in tree biomass over time
+  output$sugar_maple_change <- renderPlot({
+    ggplot(w6_veg, aes(year, AbvBmss, size = BlwBmss))+
+      geom_point()
+  })
   
 })
